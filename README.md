@@ -4,7 +4,7 @@ AI를 통해 AI 프로그램을 개발하고 즉시 배포할 수 있는 웹 플
 
 ## 🎯 핵심 기능
 
-1. **AI 대화형 개발**: Claude AI와 대화하며 앱 생성
+1. **AI 대화형 개발**: Gemini AI와 대화하며 앱 생성
 2. **실시간 프리뷰**: Sandpack으로 즉시 결과 확인
 3. **원클릭 배포**: 생성된 앱을 별도 URL로 배포
 4. **API 키 불필요**: 사용자는 API 키를 몰라도 사용 가능 (프록시 서버 관리)
@@ -25,7 +25,7 @@ AI를 통해 AI 프로그램을 개발하고 즉시 배포할 수 있는 웹 플
 │ - Rate limiting                         │
 └─────────────────────────────────────────┘
               ↓
-         [Claude API]
+         [Gemini API]
 ```
 
 ## 📂 프로젝트 구조
@@ -54,7 +54,7 @@ AI를 통해 AI 프로그램을 개발하고 즉시 배포할 수 있는 웹 플
 
 - Node.js 18+
 - pnpm (권장) 또는 npm
-- Claude API Key
+- Gemini API Key
 - Cloudflare account (프록시 서버용)
 
 ### Frontend 설치 및 실행
@@ -85,7 +85,7 @@ PROXY_URL=https://your-proxy.workers.dev
 ### Proxy (Cloudflare Workers Secrets)
 
 ```bash
-npx wrangler secret put ANTHROPIC_KEY
+npx wrangler secret put GEMINI_KEY
 ```
 
 ## 📝 사용 방법

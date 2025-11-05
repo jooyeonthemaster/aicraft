@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(README.md)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --turbopack)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --turbopack)",
+      "Bash(npm install:*)",
+      "Bash(npm init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n[ADD] Complete AI Builder Platform Implementation\n\nBuild complete AI-powered platform for creating and deploying AI applications.\n\nFeatures:\n- AI chat interface with Claude API integration\n- Real-time code preview with Sandpack\n- Code generation system with smart prompting\n- One-click deployment functionality\n- Cloudflare Workers proxy for secure API key management\n- Rate limiting and CORS security\n\nTechnical Stack:\n- Frontend: Next.js 15, React 18, TypeScript, Tailwind CSS, Sandpack\n- Backend: Cloudflare Workers, TypeScript\n- APIs: Anthropic Claude API\n\nFiles:\n- frontend/ (Next.js application)\n- proxy/ (Cloudflare Workers)\n- Documentation (README.md, SETUP.md, USAGE.md)\n- Configuration files\n\n🚀 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npm uninstall:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n[UPDATE] Migrate from Claude to Gemini API\n\nReplace Claude Sonnet 4 with Gemini 2.0 Flash Exp for better free tier and cost efficiency.\n\nChanges:\n- Frontend: Replaced @anthropic-ai/sdk with @google/generative-ai\n- API: Migrated code generation to use Gemini API\n- Proxy: Updated to use Gemini REST API with Claude-compatible response format\n- Environment: Changed ANTHROPIC_API_KEY to GEMINI_API_KEY\n- Documentation: Updated all references to Gemini\n\nBenefits:\n- Free API with generous limits (15 req/min)\n- Faster response times\n- Zero API costs for demos\n- Using existing Gemini API key from investment project\n\nModel: gemini-2.0-flash-exp\nAPI Key: AIzaSyCln3-C_bbPWQZq3UE_yY8PSQmyPuywAgo\n\n🚀 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

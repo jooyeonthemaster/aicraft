@@ -10,8 +10,8 @@ name = "ai-proxy-dev"
 [env.production]
 name = "ai-proxy-production"
 
-# Secrets (set via: wrangler secret put ANTHROPIC_KEY)
-# ANTHROPIC_KEY = "your-api-key-here"
+# Secrets (set via: wrangler secret put GEMINI_KEY)
+# GEMINI_KEY = "your-api-key-here"
 
 # KV for rate limiting (optional)
 # [[kv_namespaces]]

@@ -6,7 +6,7 @@ AI Builder Platform 설치 및 실행 방법을 단계별로 안내합니다.
 
 - Node.js 18+ 설치
 - npm 또는 pnpm 설치
-- Claude API Key ([https://console.anthropic.com](https://console.anthropic.com))
+- Gemini API Key ([https://console.aistudio.google.com](https://console.aistudio.google.com))
 - Cloudflare 계정 (무료) ([https://dash.cloudflare.com](https://dash.cloudflare.com))
 
 ## 🚀 빠른 시작 (5분 완성)
@@ -21,8 +21,8 @@ cd proxy
 npx wrangler login
 
 # API 키 설정
-npx wrangler secret put ANTHROPIC_KEY
-# 프롬프트에서 Claude API 키 입력
+npx wrangler secret put GEMINI_KEY
+# 프롬프트에서 Gemini API 키 입력
 
 # 개발 서버 실행 (로컬 테스트용)
 npm run dev
@@ -43,7 +43,7 @@ cd ../frontend
 cp .env.local.example .env.local
 
 # .env.local 파일 수정
-# ANTHROPIC_API_KEY=sk-ant-xxxxx
+# GEMINI_API_KEY=sk-ant-xxxxx
 # NEXT_PUBLIC_PROXY_URL=https://ai-proxy.your-subdomain.workers.dev
 
 # 개발 서버 실행
@@ -90,8 +90,8 @@ npm run deploy:production
 ```env
 # .env.local
 
-# Claude API Key (코드 생성용)
-ANTHROPIC_API_KEY=sk-ant-xxxxx
+# Gemini API Key (코드 생성용)
+GEMINI_API_KEY=sk-ant-xxxxx
 
 # Proxy URL (배포된 Cloudflare Workers URL)
 NEXT_PUBLIC_PROXY_URL=https://ai-proxy.your-subdomain.workers.dev
@@ -117,7 +117,7 @@ npm i -g vercel
 vercel
 
 # 환경 변수 설정
-vercel env add ANTHROPIC_API_KEY
+vercel env add GEMINI_API_KEY
 vercel env add NEXT_PUBLIC_PROXY_URL
 
 # 프로덕션 배포
@@ -132,8 +132,8 @@ vercel --prod
 
 ```bash
 cd proxy
-npx wrangler secret put ANTHROPIC_KEY
-# Claude API 키를 다시 입력
+npx wrangler secret put GEMINI_KEY
+# Gemini API 키를 다시 입력
 ```
 
 #### CORS 오류

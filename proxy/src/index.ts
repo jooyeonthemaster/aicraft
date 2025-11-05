@@ -1,14 +1,14 @@
 /**
  * AI Proxy Server for 일해라컴퍼니
  *
- * This Cloudflare Worker acts as a proxy between deployed apps and Claude API.
+ * This Cloudflare Worker acts as a proxy between deployed apps and Gemini API.
  * - Hides API keys from client-side code
  * - Implements rate limiting
  * - Provides usage analytics
  */
 
 interface Env {
-  ANTHROPIC_KEY: string;
+  GEMINI_KEY: string;
   RATE_LIMIT?: KVNamespace;
 }
 
@@ -41,9 +41,10 @@ export default {
         {
           status: 'ok',
           service: 'ai-proxy',
+          ai: 'Gemini',
           version: '1.0.0',
           endpoints: {
-            '/chat': 'POST - Chat with Claude AI',
+            '/chat': 'POST - Chat with Gemini AI',
             '/health': 'GET - Health check'
           }
         },
@@ -66,7 +67,7 @@ export default {
 async function handleChat(request: Request, env: Env): Promise<Response> {
   try {
     // Check API key
-    if (!env.ANTHROPIC_KEY) {
+    if (!env.GEMINI_KEY) {
       return Response.json(
         { error: 'API key not configured' },
         { status: 500, headers: CORS_HEADERS }
@@ -102,7 +103,7 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
 
     // Parse request
     const body: ChatRequest = await request.json();
-    const { message, model = 'claude-sonnet-4-20250514', max_tokens = 1024 } = body;
+    const { message, model = 'gemini-2.0-flash-exp', max_tokens = 1024 } = body;
 
     if (!message) {
       return Response.json(
@@ -111,34 +112,59 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
       );
     }
 
-    // Call Claude API
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Gemini API using REST
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_KEY}`;
+
+    const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model,
-        max_tokens,
-        messages: [
+        contents: [
           {
-            role: 'user',
-            content: message
+            parts: [
+              {
+                text: message
+              }
+            ]
           }
-        ]
+        ],
+        generationConfig: {
+          temperature: 0.9,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: max_tokens,
+        }
       })
     });
 
-    if (!anthropicResponse.ok) {
-      const errorData = await anthropicResponse.json();
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
       throw new Error(errorData.error?.message || 'API request failed');
     }
 
-    const data = await anthropicResponse.json();
+    const data = await geminiResponse.json();
 
-    return Response.json(data, { headers: CORS_HEADERS });
+    // Transform Gemini response to Claude-like format for compatibility
+    const transformed = {
+      id: 'msg_' + Date.now(),
+      type: 'message',
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated'
+        }
+      ],
+      model: model,
+      usage: {
+        input_tokens: data.usageMetadata?.promptTokenCount || 0,
+        output_tokens: data.usageMetadata?.candidatesTokenCount || 0
+      }
+    };
+
+    return Response.json(transformed, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('Chat error:', error);
     return Response.json(

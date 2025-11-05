@@ -2,6 +2,45 @@
 
 All notable changes to the AI Builder Platform will be documented here.
 
+## 2025-11-06 - [UPDATE] Migration from Claude to Gemini API
+
+**Changed Files**:
+- frontend/package.json (Replaced @anthropic-ai/sdk with @google/generative-ai)
+- frontend/.env.local (ANTHROPIC_API_KEY → GEMINI_API_KEY)
+- frontend/.env.local.example (Updated API key variable name)
+- frontend/app/api/generate/route.ts (Migrated to Gemini API)
+- proxy/src/index.ts (Migrated to Gemini REST API)
+- proxy/wrangler.toml (Updated secret name: GEMINI_KEY)
+- All documentation files (*.md)
+
+**Changes**:
+- ✅ Replaced Claude Sonnet 4 with Gemini 2.0 Flash Exp
+- ✅ Updated all API integrations to use Google Generative AI
+- ✅ Maintained Claude-compatible response format for frontend compatibility
+- ✅ Updated environment variable names throughout project
+- ✅ Updated all documentation to reference Gemini instead of Claude
+
+**Reason**:
+- Gemini API offers better free tier (15 requests/minute vs paid-only Claude)
+- Existing Gemini API key already available from investment project
+- Faster response times with gemini-2.0-flash-exp model
+- More cost-effective for demo and production use
+
+**Technical Changes**:
+- Model: claude-sonnet-4-20250514 → gemini-2.0-flash-exp
+- Package: @anthropic-ai/sdk → @google/generative-ai
+- Proxy uses Gemini REST API (Cloudflare Workers compatible)
+- Response transformation maintains compatibility with frontend
+
+**Impact**:
+- 🆓 Free API usage with generous limits
+- ⚡ Faster code generation
+- 💰 Zero API costs for testing and demos
+- 🔄 Fully backward compatible (response format preserved)
+
+**API Key**:
+- Gemini API Key: AIzaSyCln3-C_bbPWQZq3UE_yY8PSQmyPuywAgo (from investment project)
+
 ## 2025-11-06 - [ADD] Complete AI Builder Platform Implementation
 
 **Changed Files**:

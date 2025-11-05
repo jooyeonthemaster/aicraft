@@ -4,7 +4,7 @@ Cloudflare Workers 기반 AI API 프록시 서버
 
 ## 기능
 
-- ✅ Claude API 키 숨김 (클라이언트에서 접근 불가)
+- ✅ Gemini API 키 숨김 (클라이언트에서 접근 불가)
 - ✅ Rate limiting (시간당 10회 요청 제한)
 - ✅ CORS 설정
 - ✅ 사용량 모니터링
@@ -29,7 +29,7 @@ npx wrangler login
 ### 2. API 키 설정
 
 ```bash
-npx wrangler secret put ANTHROPIC_KEY
+npx wrangler secret put GEMINI_KEY
 # 프롬프트에서 API 키 입력
 ```
 
@@ -68,7 +68,7 @@ Content-Type: application/json
 
 {
   "message": "안녕하세요",
-  "model": "claude-sonnet-4-20250514",
+  "model": "gemini-2.0-flash-exp",
   "max_tokens": 1024
 }
 ```
@@ -85,7 +85,7 @@ Content-Type: application/json
       "text": "안녕하세요! 무엇을 도와드릴까요?"
     }
   ],
-  "model": "claude-sonnet-4-20250514",
+  "model": "gemini-2.0-flash-exp",
   "usage": {
     "input_tokens": 10,
     "output_tokens": 20
@@ -131,7 +131,7 @@ npm run tail
 ### API 키 오류
 
 ```bash
-npx wrangler secret put ANTHROPIC_KEY
+npx wrangler secret put GEMINI_KEY
 ```
 
 ### CORS 오류

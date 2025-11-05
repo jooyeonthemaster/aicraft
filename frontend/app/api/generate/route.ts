@@ -1,8 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || ''
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not defined in environment variables');
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const model = genAI.getGenerativeModel({
+  model: 'gemini-2.0-flash-exp',
+  generationConfig: {
+    temperature: 0.9,
+    topK: 40,
+    topP: 0.95,
+    maxOutputTokens: 4096,
+  },
 });
 
 const SYSTEM_PROMPT = `당신은 React 앱 코드를 생성하는 전문 AI입니다.
@@ -59,31 +71,20 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        { error: 'ANTHROPIC_API_KEY가 설정되지 않았습니다' },
+        { error: 'GEMINI_API_KEY가 설정되지 않았습니다' },
         { status: 500 }
       );
     }
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [
-        {
-          role: 'user',
-          content: `${SYSTEM_PROMPT}\n\n사용자 요청: ${prompt}\n\n오직 App.js의 전체 코드만 작성하세요. 설명 없이 코드만 반환하세요.`
-        }
-      ]
-    });
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n사용자 요청: ${prompt}\n\n오직 App.js의 전체 코드만 작성하세요. 설명 없이 코드만 반환하세요.`;
 
-    const content = message.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response type');
-    }
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    let code = response.text();
 
     // Extract code from markdown if present
-    let code = content.text;
     const codeMatch = code.match(/```(?:javascript|jsx|tsx?)?\n([\s\S]*?)\n```/);
     if (codeMatch) {
       code = codeMatch[1];
