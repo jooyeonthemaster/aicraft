@@ -1,0 +1,22 @@
+{
+  "name": "ai-proxy",
+  "version": "1.0.0",
+  "description": "AI Proxy server for 일해라컴퍼니 platform",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail"
+  },
+  "keywords": ["cloudflare-workers", "ai", "proxy"],
+  "author": "일해라컴퍼니",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.45.4"
+  }
+}

@@ -1,0 +1,19 @@
+name = "ai-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Development settings
+[env.dev]
+name = "ai-proxy-dev"
+
+# Production settings
+[env.production]
+name = "ai-proxy-production"
+
+# Secrets (set via: wrangler secret put ANTHROPIC_KEY)
+# ANTHROPIC_KEY = "your-api-key-here"
+
+# KV for rate limiting (optional)
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "your-kv-namespace-id"
