@@ -8,25 +8,29 @@ import { NextResponse } from 'next/server';
 import { getTemplate } from '@/lib/templates';
 import { IndustryType, UITheme } from '@/types/templates';
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not defined in environment variables');
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// 시연용 최대 토큰 설정 - 최고 품질 보장
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.5-pro',
-  generationConfig: {
-    temperature: 0.3,
-    topK: 40,
-    topP: 0.9,
-    maxOutputTokens: 64000, // 최대 출력 토큰
-  },
-});
-
 export async function POST(request: Request) {
   try {
+    // 런타임에 환경변수 체크
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY가 설정되지 않았습니다' },
+        { status: 500 }
+      );
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    
+    // 시연용 최대 토큰 설정 - 최고 품질 보장
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-pro',
+      generationConfig: {
+        temperature: 0.3,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 64000, // 최대 출력 토큰
+      },
+    });
+    
     const { industry, theme, data, businessInfo, appSettings } = await request.json();
 
     // 검증

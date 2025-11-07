@@ -1,23 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not defined in environment variables');
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// 시연용 최대 토큰 설정 - 최고 품질 보장
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.5-pro',
-  generationConfig: {
-    temperature: 0.2,
-    topK: 40,
-    topP: 0.9,
-    maxOutputTokens: 64000, // 최대 출력 토큰
-  },
-});
-
 const SYSTEM_PROMPT = `당신은 React 앱 코드를 생성하는 전문 AI입니다.
 
 중요 규칙:
@@ -221,6 +204,19 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    
+    // 시연용 최대 토큰 설정 - 최고 품질 보장
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-pro',
+      generationConfig: {
+        temperature: 0.2,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 64000, // 최대 출력 토큰
+      },
+    });
 
     const fullPrompt = `${SYSTEM_PROMPT}\n\n사용자 요청: ${prompt}\n\n오직 App.js의 전체 코드만 작성하세요. 설명 없이 코드만 반환하세요.`;
 
