@@ -1,0 +1,183 @@
+/**
+ * AI Proxy Server for 일해라컴퍼니
+ *
+ * This Cloudflare Worker acts as a proxy between deployed apps and Gemini API.
+ * - Hides API keys from client-side code
+ * - Implements rate limiting
+ * - Provides usage analytics
+ */
+
+interface Env {
+  GEMINI_KEY: string;
+  RATE_LIMIT?: KVNamespace;
+}
+
+interface ChatRequest {
+  message: string;
+  model?: string;
+  max_tokens?: number;
+}
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+const RATE_LIMIT_PER_HOUR = 10; // Free tier: 10 requests per hour per IP
+
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: CORS_HEADERS });
+    }
+
+    const url = new URL(request.url);
+
+    // Health check endpoint
+    if (url.pathname === '/' || url.pathname === '/health') {
+      return Response.json(
+        {
+          status: 'ok',
+          service: 'ai-proxy',
+          ai: 'Gemini',
+          version: '1.0.0',
+          apiKeyConfigured: !!env.GEMINI_KEY,
+          apiKeyLength: env.GEMINI_KEY?.length || 0,
+          endpoints: {
+            '/chat': 'POST - Chat with Gemini AI',
+            '/health': 'GET - Health check'
+          }
+        },
+        { headers: CORS_HEADERS }
+      );
+    }
+
+    // Chat endpoint
+    if (url.pathname === '/chat' && request.method === 'POST') {
+      return handleChat(request, env);
+    }
+
+    return new Response('Not found', {
+      status: 404,
+      headers: CORS_HEADERS
+    });
+  }
+};
+
+async function handleChat(request: Request, env: Env): Promise<Response> {
+  try {
+    // Check API key
+    if (!env.GEMINI_KEY) {
+      return Response.json(
+        { error: 'API key not configured' },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
+    // Rate limiting (optional - requires KV namespace)
+    const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (env.RATE_LIMIT) {
+      const rateLimitKey = `rate:${clientIP}`;
+      const currentCount = await env.RATE_LIMIT.get(rateLimitKey);
+      const count = currentCount ? parseInt(currentCount) : 0;
+
+      if (count >= RATE_LIMIT_PER_HOUR) {
+        return Response.json(
+          {
+            error: 'Rate limit exceeded',
+            message: '시연 한도를 초과했습니다. 1시간 후 다시 시도해주세요.',
+            limit: RATE_LIMIT_PER_HOUR,
+            resetIn: 3600
+          },
+          { status: 429, headers: CORS_HEADERS }
+        );
+      }
+
+      // Increment counter
+      await env.RATE_LIMIT.put(
+        rateLimitKey,
+        (count + 1).toString(),
+        { expirationTtl: 3600 } // 1 hour
+      );
+    }
+
+    // Parse request
+    const body: ChatRequest = await request.json();
+    let { message, model = 'gemini-2.5-pro', max_tokens = 1024 } = body;
+
+    // Always use Gemini model (ignore client-specified model for compatibility)
+    model = 'gemini-2.5-pro';
+
+    if (!message) {
+      return Response.json(
+        { error: 'Message is required' },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // Call Gemini API using REST
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_KEY}`;
+
+    const geminiResponse = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: message
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.9,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: max_tokens,
+        }
+      })
+    });
+
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
+      throw new Error(errorData.error?.message || 'API request failed');
+    }
+
+    const data = await geminiResponse.json();
+
+    // Transform Gemini response to Claude-like format for compatibility
+    const transformed = {
+      id: 'msg_' + Date.now(),
+      type: 'message',
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated'
+        }
+      ],
+      model: model,
+      usage: {
+        input_tokens: data.usageMetadata?.promptTokenCount || 0,
+        output_tokens: data.usageMetadata?.candidatesTokenCount || 0
+      }
+    };
+
+    return Response.json(transformed, { headers: CORS_HEADERS });
+  } catch (error) {
+    console.error('Chat error:', error);
+    return Response.json(
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}

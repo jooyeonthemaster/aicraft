@@ -1,28 +1,59 @@
-# AI Builder Platform - 일해라컴퍼니
+# lunus - AI 앱 빌더
 
-AI를 통해 AI 프로그램을 개발하고 즉시 배포할 수 있는 웹 플랫폼
+**템플릿 기반으로 업종별 AI 추천 앱을 쉽고 빠르게 만드세요!**
 
 ## 🎯 핵심 기능
 
-1. **AI 대화형 개발**: Gemini AI와 대화하며 앱 생성
-2. **실시간 프리뷰**: Sandpack으로 즉시 결과 확인
-3. **원클릭 배포**: 생성된 앱을 별도 URL로 배포
-4. **API 키 불필요**: 사용자는 API 키를 몰라도 사용 가능 (프록시 서버 관리)
+### 🎨 5가지 업종 × 3가지 테마 = 15가지 조합
+1. **🍽️ 요식업** - 메뉴 추천 AI (10개 샘플 데이터)
+2. **🏠 부동산** - 매물 추천 AI (5개 샘플 데이터)
+3. **🏥 의료** - 진료과 추천 AI (5개 샘플 데이터)
+4. **🛍️ 쇼핑몰** - 상품 추천 AI (5개 샘플 데이터)
+5. **✈️ 여행** - 여행지 추천 AI (5개 샘플 데이터)
+
+각 템플릿별 3가지 UI 테마: **모던, 클래식, 미니멀**
+
+### 📁 유연한 데이터 입력
+- **텍스트 입력**: 자동 샘플 데이터 제공, 수정 가능
+- **파일 업로드**: Excel, CSV, JSON, TXT 지원
+- **자동 파싱**: 검증 및 미리보기
+
+### 🏪 업체 정보 시스템 (NEW!)
+- **업체 정보**: 업체명, 연락처, 주소, 영업시간, 특징
+- **앱 설정**: 제목, 환영 메시지, 색상
+- **AI 설정**: 응답 스타일, 추천 개수, 추가 지침
+- **3탭 구조**: 체계적인 설정 관리
+
+### 💬 AI 반복 수정 시스템 (NEW! 🔥)
+- **대화형 개선**: 채팅으로 무제한 코드 수정
+- **버전 히스토리**: 모든 수정 단계 자동 저장
+- **되돌리기**: 이전 버전 원클릭 복구
+- **빠른 명령어**: 자주 쓰는 수정 버튼화
+- **최대 토큰**: 64k 출력으로 최고 품질
 
 ## 🏗️ 아키텍처
 
 ```
 ┌─────────────────────────────────────────┐
-│ Frontend (Next.js + Sandpack)           │
-│ - AI 채팅으로 앱 생성                    │
-│ - 실시간 프리뷰                          │
-│ - 원클릭 배포                            │
+│ Frontend (Next.js 16 + React 19)         │
+│ - 템플릿 선택                             │
+│ - 파일 업로드 & 파싱                      │
+│ - 동적 폼                                 │
+│ - AI 앱 생성 & 프리뷰                     │
+│ - 380px 고정 모바일 레이아웃              │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│ API Routes                               │
+│ - /api/generate-template                 │
+│ - /api/deploy                            │
+│ - /api/proxy-chat                        │
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
 │ Proxy Server (Cloudflare Workers)       │
-│ - API 키 보관 (사용자는 몰라도 됨)       │
-│ - Rate limiting                         │
+│ - API 키 보안 관리                        │
+│ - Rate Limiting                          │
 └─────────────────────────────────────────┘
               ↓
          [Gemini API]
@@ -32,79 +63,201 @@ AI를 통해 AI 프로그램을 개발하고 즉시 배포할 수 있는 웹 플
 
 ```
 .
-├── frontend/              # Next.js 메인 플랫폼
+├── frontend/
 │   ├── app/
-│   │   ├── page.tsx      # AI 채팅 + Sandpack 프리뷰
+│   │   ├── page.tsx                    # 메인 페이지 (단계별 워크플로우)
+│   │   ├── layout.tsx
 │   │   └── api/
-│   │       ├── generate/ # 코드 생성 API
-│   │       └── deploy/   # 배포 API
-│   └── components/
-│       ├── ChatInterface.tsx
-│       └── CodePreview.tsx
-├── proxy/                # Cloudflare Workers
+│   │       ├── generate-template/      # 템플릿 기반 코드 생성
+│   │       ├── deploy/
+│   │       ├── proxy-chat/
+│   │       └── deployed/[id]/
+│   ├── components/
+│   │   ├── TemplateSelector.tsx        # 업종 & 테마 선택
+│   │   ├── FileUploader.tsx            # 파일 업로드 & 검증
+│   │   ├── DynamicForm.tsx             # 동적 입력 폼
+│   │   ├── CodePreview.tsx             # Sandpack 프리뷰
+│   │   └── Footer.tsx                  # 푸터
+│   ├── lib/
+│   │   ├── templates/                  # 5가지 업종 템플릿
+│   │   │   ├── restaurant.ts
+│   │   │   ├── realestate.ts
+│   │   │   ├── medical.ts
+│   │   │   ├── ecommerce.ts
+│   │   │   ├── travel.ts
+│   │   │   └── index.ts
+│   │   └── parsers/                    # 파일 파서
+│   │       └── index.ts
+│   └── types/
+│       └── templates.ts                # 타입 정의
+├── proxy/                              # Cloudflare Workers
 │   └── src/
-│       └── index.ts      # AI API 프록시
-└── templates/            # AI 코드 생성 템플릿
-    └── app-template.ts
+│       └── index.ts
+└── env.txt                             # 환경 변수 템플릿
 ```
 
-## 🚀 시작하기
+## 🚀 5분 시작 가이드
 
-### Prerequisites
-
-- Node.js 18+
-- pnpm (권장) 또는 npm
-- Gemini API Key
-- Cloudflare account (프록시 서버용)
-
-### Frontend 설치 및 실행
-
+### 1️⃣ 환경 변수 설정 (1분)
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+copy ..\env.txt .env.local  # Windows
+# .env.local 파일에서 GEMINI_API_KEY 입력
 ```
 
-### Proxy 서버 배포
-
+### 2️⃣ 프록시 서버 실행 (1분)
 ```bash
 cd proxy
-pnpm install
-npx wrangler deploy
+npm run dev  # → http://localhost:8787
 ```
 
-## 🔑 환경 변수 설정
-
-### Frontend (.env.local)
-
-```env
-CLAUDE_API_KEY=your_claude_api_key
-PROXY_URL=https://your-proxy.workers.dev
-```
-
-### Proxy (Cloudflare Workers Secrets)
-
+### 3️⃣ Frontend 실행 (1분)
 ```bash
-npx wrangler secret put GEMINI_KEY
+cd frontend
+npm run dev  # → http://localhost:3000
 ```
 
-## 📝 사용 방법
+### 4️⃣ AI 앱 만들기! (2분)
+1. 업종 선택 (예: 🍽️ 요식업)
+2. 테마 선택 (예: 모던)
+3. 데이터 확인 (자동 입력됨!)
+4. 업체 정보 입력
+5. 생성 클릭! 🚀
 
-1. Frontend 접속
-2. "챗봇 만들어줘" 같은 요청 입력
-3. 실시간으로 코드 생성 및 프리뷰 확인
-4. "배포" 버튼으로 별도 URL 생성
+## 🎨 워크플로우
 
-## 🛡️ 보안
+### Step 1: 템플릿 선택 (30초)
+- 5가지 업종 × 3가지 테마 = 15가지 조합
+- 업종별 아이콘과 설명 제공
 
-- API 키는 프록시 서버에만 보관
-- Rate limiting으로 비용 통제
-- 생성된 앱들은 샌드박스 환경에서 실행
+### Step 2: 데이터 입력 (1분)
+- ✨ **자동 샘플 데이터 제공!**
+- 텍스트 편집 또는 파일 업로드
+- 실시간 파싱 및 미리보기
+
+### Step 3: 업체 정보 및 설정 (2분)
+- 🏪 **업체 정보**: 업체명, 연락처, 주소, 특징
+- 🎨 **앱 설정**: 제목, 색상, 환영 메시지
+- 🤖 **AI 설정**: 응답 스타일, 추천 개수
+
+### Step 4: 완성 + 반복 수정 (무제한!)
+- 💬 **채팅으로 계속 개선**: "버튼 크게", "색상 변경"
+- 📚 **버전 히스토리**: 모든 수정 단계 저장
+- 🔄 **되돌리기**: 이전 버전 복구
+- 💾 **다운로드**: HTML 파일로 저장
+- 🚀 **배포**: 원클릭 배포
+
+## 📊 템플릿 상세
+
+### 요식업 템플릿
+**데이터**: 메뉴명, 가격, 재료, 알러지, 맵기, 카테고리
+**입력**: 알러지, 식습관, 맵기 선호도, 예산
+**기능**: AI가 고객에게 최적의 메뉴 추천
+
+### 부동산 템플릿
+**데이터**: 매물명, 위치, 가격, 평수, 방/욕실 개수
+**입력**: 예산, 선호 지역, 면적, 가족 구성원
+**기능**: AI가 예산과 선호도에 맞는 매물 추천
+
+### 의료 템플릿
+**데이터**: 진료과, 담당의, 전문분야, 증상
+**입력**: 증상, 통증 부위, 지속 기간, 나이/성별
+**기능**: AI가 증상에 맞는 진료과 추천
+
+### 쇼핑몰 템플릿
+**데이터**: 상품명, 가격, 카테고리, 브랜드, 태그
+**입력**: 예산, 선호 스타일, 브랜드, 구매 목적
+**기능**: AI가 스타일에 맞는 상품 추천
+
+### 여행 템플릿
+**데이터**: 여행지, 국가, 예산, 시즌, 액티비티
+**입력**: 예산, 여행 스타일, 동행자, 기간
+**기능**: AI가 여행 스타일에 맞는 여행지 추천
+
+## 🛠️ 기술 스택
+
+### Frontend
+- **Next.js 16.0.1** - 최신 App Router
+- **React 19.2.0** - 최신 React
+- **TypeScript 5** - 타입 안정성
+- **Tailwind CSS 4** - 최신 CSS 프레임워크
+- **Sandpack** - 브라우저 내 코드 실행
+- **XLSX** - 엑셀 파일 파싱
+- **PapaParse** - CSV 파싱
+
+### Backend
+- **Cloudflare Workers** - 서버리스 프록시
+- **Gemini 2.5 Pro** - AI 코드 생성
+
+## 🎯 디자인 시스템
+
+### 반응형 레이아웃
+- 모바일(380px)부터 PC(최대 1200px)까지 최적화
+- 자동 그리드 조정 (모바일 1열, 태블릿 2열, PC 3열)
+- 흰색/실버 테마
+
+### 단계별 워크플로우
+- 직관적인 4단계 프로세스
+- 진행 상태 바
+- 단계별 애니메이션
+
+## 📱 화면 구성
+
+### Header
+- lunus 로고 (🌙)
+- 반응형 헤더
+
+### Progress Bar
+- 4단계 진행 상태 표시
+- 완료된 단계 체크 표시
+
+### Main Content
+- 반응형 그리드 레이아웃
+- 단계별 컨텐츠 영역
+- 부드러운 페이드인 애니메이션
+
+### Footer
+- **대표**: 홍채민
+- 저작권 정보
+
+## 🔧 개발 가이드
+
+### 새로운 템플릿 추가
+
+1. `frontend/lib/templates/` 에 새 템플릿 파일 생성
+2. `Template` 인터페이스 구현
+3. `frontend/lib/templates/index.ts` 에 등록
+4. `IndustryType` 타입에 추가
+
+### 새로운 UI 테마 추가
+
+각 템플릿의 `themes` 객체에 새 테마 추가:
+```typescript
+themes: {
+  newTheme: {
+    id: 'newTheme',
+    name: '새 테마',
+    // ... 테마 설정
+  }
+}
+```
+
+## 🔐 보안
+
+- API 키는 서버 사이드에서만 사용
+- 프록시 서버를 통한 API 호출
+- 파일 크기 제한 (10MB)
+- 데이터 검증 및 정규화
 
 ## 📄 라이선스
 
-MIT
+MIT License
 
-## 🤝 기여
+## 🤝 제작
 
-이슈와 PR 환영합니다!
+**lunus**  
+대표: 홍채민
+
+---
+
+Made with ❤️ by lunus

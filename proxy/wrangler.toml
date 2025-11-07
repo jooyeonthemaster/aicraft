@@ -17,3 +17,10 @@ name = "ai-proxy-production"
 # [[kv_namespaces]]
 # binding = "RATE_LIMIT"
 # id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
+
+# KV for deployments (HTML storage)
+[[kv_namespaces]]
+binding = "DEPLOYMENTS"
+id = "e84412663e604698a3a9c43cae2fb01d"
+preview_id = "e6328df2dbdd4709bc9f21eb83179840"

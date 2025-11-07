@@ -10,12 +10,18 @@
 interface Env {
   GEMINI_KEY: string;
   RATE_LIMIT?: KVNamespace;
+  DEPLOYMENTS: KVNamespace;
 }
 
 interface ChatRequest {
   message: string;
   model?: string;
   max_tokens?: number;
+}
+
+interface DeployRequest {
+  code: string;
+  projectId?: string;
 }
 
 const CORS_HEADERS = {
@@ -43,6 +49,8 @@ export default {
           service: 'ai-proxy',
           ai: 'Gemini',
           version: '1.0.0',
+          apiKeyConfigured: !!env.GEMINI_KEY,
+          apiKeyLength: env.GEMINI_KEY?.length || 0,
           endpoints: {
             '/chat': 'POST - Chat with Gemini AI',
             '/health': 'GET - Health check'
@@ -57,12 +65,204 @@ export default {
       return handleChat(request, env);
     }
 
+    // Deploy endpoint
+    if (url.pathname === '/deploy' && request.method === 'POST') {
+      return handleDeploy(request, env);
+    }
+
+    // Deployed app endpoint
+    if (url.pathname.startsWith('/deployed/') && request.method === 'GET') {
+      const projectId = url.pathname.split('/deployed/')[1];
+      return handleGetDeployment(projectId, env);
+    }
+
     return new Response('Not found', {
       status: 404,
       headers: CORS_HEADERS
     });
   }
 };
+
+/**
+ * 배포 엔드포인트 - HTML 코드를 KV에 저장
+ */
+async function handleDeploy(request: Request, env: Env): Promise<Response> {
+  try {
+    const body: DeployRequest = await request.json();
+    const { code } = body;
+
+    if (!code) {
+      return Response.json(
+        { error: '코드가 필요합니다' },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // Generate unique project ID
+    const projectId = generateId(10);
+
+    // Create complete HTML with proxy helper
+    const proxyUrl = new URL(request.url).origin;
+
+    const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Generated App - lunus</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useRef } = React;
+
+    // AI Proxy helper
+    const AI_PROXY_URL = '${proxyUrl}';
+
+    async function chatWithAI(message) {
+      try {
+        const response = await fetch(AI_PROXY_URL + '/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            model: 'gemini-2.5-flash',
+            max_tokens: 1024
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('API 요청 실패');
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error('AI API Error:', error);
+        throw error;
+      }
+    }
+
+    // User's generated code
+    ${code}
+
+    // Render
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>`;
+
+    // Store in Cloudflare KV
+    await env.DEPLOYMENTS.put(projectId, html, {
+      metadata: {
+        createdAt: new Date().toISOString(),
+        size: html.length
+      }
+    });
+
+    // Return deployment info
+    const deploymentUrl = `${proxyUrl}/deployed/${projectId}`;
+
+    return Response.json(
+      {
+        success: true,
+        url: deploymentUrl,
+        projectId,
+        createdAt: new Date().toISOString()
+      },
+      { headers: CORS_HEADERS }
+    );
+  } catch (error) {
+    console.error('Deploy error:', error);
+    return Response.json(
+      {
+        error: '배포 중 오류가 발생했습니다',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
+/**
+ * 배포된 앱 조회 엔드포인트 - KV에서 HTML 가져오기
+ */
+async function handleGetDeployment(projectId: string, env: Env): Promise<Response> {
+  try {
+    if (!projectId) {
+      return new Response('Project ID is required', {
+        status: 400,
+        headers: CORS_HEADERS
+      });
+    }
+
+    // Get from KV
+    const html = await env.DEPLOYMENTS.get(projectId);
+
+    if (!html) {
+      return new Response(`
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Not Found</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+  <div class="text-center">
+    <h1 class="text-6xl font-bold mb-4">404</h1>
+    <p class="text-xl text-gray-400 mb-2">배포된 앱을 찾을 수 없습니다</p>
+    <p class="text-sm text-gray-500">프로젝트 ID: ${projectId}</p>
+  </div>
+</body>
+</html>`, {
+        status: 404,
+        headers: {
+          'Content-Type': 'text/html',
+          ...CORS_HEADERS
+        }
+      });
+    }
+
+    // Return the stored HTML
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=31536000',
+        ...CORS_HEADERS
+      }
+    });
+  } catch (error) {
+    console.error('Get deployment error:', error);
+    return new Response('Internal server error', {
+      status: 500,
+      headers: CORS_HEADERS
+    });
+  }
+}
+
+/**
+ * Generate random ID (nanoid alternative for Workers)
+ */
+function generateId(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+  for (let i = 0; i < length; i++) {
+    result += chars[randomValues[i] % chars.length];
+  }
+  return result;
+}
 
 async function handleChat(request: Request, env: Env): Promise<Response> {
   try {
@@ -103,7 +303,18 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
 
     // Parse request
     const body: ChatRequest = await request.json();
-    const { message, model = 'gemini-2.0-flash-exp', max_tokens = 1024 } = body;
+    let { message, model = 'gemini-2.5-flash', max_tokens = 32000 } = body;
+
+    // 시연용 최대 토큰 설정 (기본값 32000)
+    // 최소 6000 tokens to avoid Gemini 2.5 thinking mode issues
+    if (max_tokens < 6000) {
+      max_tokens = 6000;
+    }
+    
+    // 최대 32000으로 제한 (Flash 모델)
+    if (max_tokens > 32000) {
+      max_tokens = 32000;
+    }
 
     if (!message) {
       return Response.json(
@@ -131,10 +342,11 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
           }
         ],
         generationConfig: {
-          temperature: 0.9,
-          topK: 40,
-          topP: 0.95,
+          temperature: 0.7,
+          topK: 1,
+          topP: 1,
           maxOutputTokens: max_tokens,
+          responseMimeType: "application/json",
         }
       })
     });

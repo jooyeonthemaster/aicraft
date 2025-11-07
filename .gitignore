@@ -45,3 +45,9 @@ workers-site/
 # Deployment
 .vercel
 .turbo
+
+# Windows special files
+nul
+
+# Claude AI settings
+.claude/
