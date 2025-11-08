@@ -40,6 +40,8 @@ Thumbs.db
 # Cloudflare Workers
 workers-site/
 .wrangler/
+*.dev.vars
+.dev.vars
 # wrangler.toml is included for configuration
 
 # Deployment
