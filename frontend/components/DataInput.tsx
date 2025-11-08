@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * 데이터 입력 컴포넌트
- * 파일 업로드 또는 텍스트 직접 입력 선택 가능
+ * ✨ Luxury Data Input - Spreadsheet Style
+ * 프로덕션 레벨 테이블 입력 UI
  */
 
 import { useState, useEffect } from 'react';
 import { TemplateField, IndustryType } from '@/types/templates';
 import FileUploader from './FileUploader';
-import { sampleData, sampleTextData } from '@/lib/sampleData';
+import { sampleData } from '@/lib/sampleData';
 
 interface DataInputProps {
   schema: TemplateField[];
@@ -18,7 +18,7 @@ interface DataInputProps {
   industry: IndustryType;
 }
 
-type InputMode = 'file' | 'text';
+type InputMode = 'table' | 'file';
 
 export default function DataInput({
   schema,
@@ -27,154 +27,95 @@ export default function DataInput({
   templateName,
   industry
 }: DataInputProps) {
-  const [mode, setMode] = useState<InputMode>('text');
-  const [textInput, setTextInput] = useState('');
-  const [parsedItems, setParsedItems] = useState<any[]>([]);
+  const [mode, setMode] = useState<InputMode>('table');
+  const [rows, setRows] = useState<any[]>([]);
 
-  // 컴포넌트 마운트 시 샘플 데이터 자동 로드
+  // 초기 빈 행으로 시작
   useEffect(() => {
-    const defaultText = sampleTextData[industry] || '';
-    setTextInput(defaultText);
-    
-    // 샘플 데이터 자동 적용
-    const defaultData = sampleData[industry] || [];
-    if (defaultData.length > 0) {
-      setParsedItems(defaultData);
-      onDataReady(defaultData);
-    }
+    // 빈 행 1개만 추가
+    setRows([createEmptyRow()]);
   }, [industry]);
 
-  // 텍스트 입력 파싱
-  const handleTextSubmit = () => {
-    if (!textInput.trim()) {
-      onError?.('데이터를 입력해주세요');
-      return;
+  // 테스트 데이터 불러오기
+  const loadSampleData = () => {
+    const defaultData = sampleData[industry] || [];
+    if (defaultData.length > 0) {
+      setRows(defaultData);
+      onDataReady(defaultData);
     }
+  };
 
-    try {
-      // 줄바꿈으로 구분된 각 항목을 파싱
-      const lines = textInput.split('\n').filter(line => line.trim());
-      
-      if (lines.length === 0) {
-        onError?.('데이터를 입력해주세요');
-        return;
+  // 빈 행 생성
+  const createEmptyRow = () => {
+    const emptyRow: any = {};
+    schema.forEach(field => {
+      if (field.type === 'number' || field.type === 'range') {
+        emptyRow[field.name] = field.min || 0;
+      } else if (field.type === 'multiselect') {
+        emptyRow[field.name] = [];
+      } else if (field.type === 'select') {
+        emptyRow[field.name] = field.options?.[0] || '';
+      } else {
+        emptyRow[field.name] = '';
       }
+    });
+    return emptyRow;
+  };
 
-      // 간단한 파싱: 각 줄을 하나의 항목으로 처리
-      const items = lines.map((line, index) => {
-        const trimmedLine = line.trim();
-        
-        // 템플릿별 기본 데이터 구조 생성
-        if (templateName.includes('요식업') || templateName.includes('restaurant')) {
-          // 쉼표로 구분 시도: "메뉴명, 가격, 설명"
-          const parts = trimmedLine.split(',').map(p => p.trim());
-          return {
-            menuName: parts[0] || `메뉴 ${index + 1}`,
-            price: parseInt(parts[1]) || 10000,
-            category: '기타',
-            ingredients: parts[2] ? [parts[2]] : ['정보 없음'],
-            allergens: [],
-            spicyLevel: 1,
-            description: parts[2] || parts[0] || `메뉴 ${index + 1}`,
-            isVegetarian: false,
-            isVegan: false,
-            calories: 300
-          };
-        } else if (templateName.includes('부동산') || templateName.includes('realestate')) {
-          const parts = trimmedLine.split(',').map(p => p.trim());
-          return {
-            propertyName: parts[0] || `매물 ${index + 1}`,
-            location: parts[1] || '서울',
-            price: parseInt(parts[2]) || 100000,
-            area: parseInt(parts[3]) || 30,
-            rooms: 3,
-            bathrooms: 1,
-            floor: 5,
-            buildYear: 2020,
-            propertyType: '아파트',
-            features: [],
-            description: parts[0] || `매물 ${index + 1}`
-          };
-        } else if (templateName.includes('의료') || templateName.includes('medical')) {
-          const parts = trimmedLine.split(',').map(p => p.trim());
-          return {
-            departmentName: parts[0] || `진료과 ${index + 1}`,
-            doctor: parts[1] || '담당의',
-            specialty: [parts[2] || '일반진료'],
-            symptoms: [parts[3] || '일반증상'],
-            treatmentAreas: [parts[4] || '전신'],
-            description: parts[0] || `진료과 ${index + 1}`,
-            waitTime: 30,
-            availableDays: ['월', '화', '수', '목', '금']
-          };
-        } else if (templateName.includes('쇼핑몰') || templateName.includes('ecommerce')) {
-          const parts = trimmedLine.split(',').map(p => p.trim());
-          return {
-            productName: parts[0] || `상품 ${index + 1}`,
-            price: parseInt(parts[1]) || 30000,
-            category: parts[2] || '기타',
-            brand: parts[3] || '브랜드',
-            tags: [parts[4] || '일반'],
-            colors: ['기본'],
-            sizes: ['M'],
-            description: parts[0] || `상품 ${index + 1}`,
-            rating: 4.0,
-            stock: 100
-          };
-        } else if (templateName.includes('여행') || templateName.includes('travel')) {
-          const parts = trimmedLine.split(',').map(p => p.trim());
-          return {
-            destinationName: parts[0] || `여행지 ${index + 1}`,
-            country: parts[1] || '한국',
-            region: parts[2] || '동아시아',
-            priceRange: parts[3] || '보통',
-            bestSeason: ['봄', '여름'],
-            activities: [parts[4] || '관광'],
-            travelStyle: ['휴식'],
-            description: parts[0] || `여행지 ${index + 1}`,
-            duration: 5
-          };
-        }
+  // 새 행 추가
+  const addNewRow = () => {
+    setRows([...rows, createEmptyRow()]);
+  };
 
-        // 기본 반환
-        return { name: trimmedLine, description: trimmedLine };
-      });
+  // 행 삭제
+  const deleteRow = (index: number) => {
+    const newRows = rows.filter((_, i) => i !== index);
+    setRows(newRows);
+    onDataReady(newRows);
+  };
 
-      setParsedItems(items);
-      onDataReady(items);
-    } catch (error) {
-      onError?.('데이터 파싱 실패: ' + (error instanceof Error ? error.message : '알 수 없는 오류'));
-    }
+  // 셀 값 변경
+  const updateCell = (rowIndex: number, fieldName: string, value: any) => {
+    const newRows = [...rows];
+    newRows[rowIndex] = { ...newRows[rowIndex], [fieldName]: value };
+    setRows(newRows);
+    onDataReady(newRows);
   };
 
   // 파일 업로드 완료
   const handleFileUploaded = (data: any[]) => {
+    setRows(data);
     onDataReady(data);
   };
+
+  // 필수 필드만 표시 (테이블이 너무 넓어지지 않도록)
+  const displayFields = schema.filter(f => 
+    f.required || ['menuName', 'dishName', 'itemName', 'price', 'ingredients', 'description', 'courseType', 'origin'].includes(f.name)
+  ).slice(0, 6); // 최대 6개 컬럼
 
   return (
     <div className="space-y-6">
       {/* 모드 선택 탭 */}
-      <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+      <div className="flex space-x-2 bg-slate-100 p-1.5 rounded-xl max-w-md mx-auto">
         <button
-          onClick={() => setMode('text')}
+          onClick={() => setMode('table')}
           className={`
-            flex-1 py-2 px-4 rounded-md font-medium transition-all
-            ${mode === 'text'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+            flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all
+            ${mode === 'table'
+              ? 'bg-white text-teal-700 shadow-md border-2 border-teal-200'
+              : 'text-slate-600 hover:text-slate-900'
             }
           `}
         >
-          ✏️ 텍스트 입력
+          📊 테이블 입력
         </button>
         <button
           onClick={() => setMode('file')}
           className={`
-            flex-1 py-2 px-4 rounded-md font-medium transition-all
+            flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all
             ${mode === 'file'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-white text-teal-700 shadow-md border-2 border-teal-200'
+              : 'text-slate-600 hover:text-slate-900'
             }
           `}
         >
@@ -182,75 +123,186 @@ export default function DataInput({
         </button>
       </div>
 
-      {/* 텍스트 입력 모드 */}
-      {mode === 'text' && (
+      {/* 테이블 입력 모드 */}
+      {mode === 'table' && (
         <div className="space-y-4 animate-fadeIn">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="text-sm text-blue-900 mb-2">
-              💡 <strong>텍스트 입력 가이드</strong>
-            </p>
-            <div className="text-xs text-blue-800 space-y-1">
-              <p>• 한 줄에 하나씩 입력하세요</p>
-              <p>• 쉼표(,)로 구분하여 상세 정보 입력 가능</p>
-              {templateName.includes('요식업') && (
-                <p className="mt-2 font-semibold">예시: 김치찌개, 12000, 돼지고기와 김치로 만든 얼큰한 찌개</p>
-              )}
-              {templateName.includes('부동산') && (
-                <p className="mt-2 font-semibold">예시: 강남아파트, 서울 강남구, 150000, 32</p>
-              )}
-              {templateName.includes('의료') && (
-                <p className="mt-2 font-semibold">예시: 정형외과, 김철수, 척추, 허리통증, 허리</p>
-              )}
-              {templateName.includes('쇼핑몰') && (
-                <p className="mt-2 font-semibold">예시: 면티셔츠, 39000, 의류, BASIC, 베이직</p>
-              )}
-              {templateName.includes('여행') && (
-                <p className="mt-2 font-semibold">예시: 발리, 인도네시아, 동남아시아, 보통, 서핑</p>
-              )}
+          {/* 안내 메시지 & 샘플 데이터 로드 */}
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3 flex-1">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <p className="text-sm font-bold text-teal-900 mb-1">스프레드시트 스타일 입력</p>
+                  <p className="text-xs text-teal-700">
+                    아래 테이블에서 직접 수정하거나 우측 버튼으로 샘플 데이터를 불러오세요.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={loadSampleData}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg font-bold hover:shadow-lg transition-all transform hover:scale-105 whitespace-nowrap"
+              >
+                <span className="flex items-center space-x-2">
+                  <span>✨</span>
+                  <span>테스트 데이터 불러오기</span>
+                </span>
+              </button>
             </div>
           </div>
 
-          <div>
-            <textarea
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="여기에 데이터를 입력하세요... (한 줄에 하나씩)"
-              className="w-full h-64 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              입력된 줄 수: {textInput.split('\n').filter(line => line.trim()).length}개
-            </p>
+          {/* 테이블 컨테이너 */}
+          <div className="border-2 border-slate-200 rounded-xl overflow-hidden bg-white shadow-lg">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                {/* 테이블 헤더 */}
+                <thead>
+                  <tr className="bg-gradient-to-r from-teal-600 to-teal-700">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-12">
+                      #
+                    </th>
+                    {displayFields.map((field) => (
+                      <th
+                        key={field.name}
+                        className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider"
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{field.label}</span>
+                          {field.required && <span className="text-amber-300">*</span>}
+                        </div>
+                      </th>
+                    ))}
+                    <th className="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider w-20">
+                      삭제
+                    </th>
+                  </tr>
+                </thead>
+
+                {/* 테이블 바디 */}
+                <tbody className="divide-y divide-slate-200">
+                  {rows.map((row, rowIndex) => (
+                    <tr 
+                      key={rowIndex} 
+                      className="hover:bg-teal-50/50 transition-colors group"
+                    >
+                      {/* 행 번호 */}
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-600">
+                        {rowIndex + 1}
+                      </td>
+
+                      {/* 데이터 셀들 */}
+                      {displayFields.map((field) => (
+                        <td key={field.name} className="px-4 py-3">
+                          {field.type === 'select' ? (
+                            <select
+                              value={row[field.name] || ''}
+                              onChange={(e) => updateCell(rowIndex, field.name, e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none bg-white"
+                            >
+                              {field.options?.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          ) : field.type === 'number' || field.type === 'range' ? (
+                            <input
+                              type="number"
+                              value={row[field.name] || ''}
+                              onChange={(e) => updateCell(rowIndex, field.name, parseInt(e.target.value) || 0)}
+                              min={field.min}
+                              max={field.max}
+                              placeholder={field.placeholder}
+                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
+                            />
+                          ) : field.type === 'textarea' ? (
+                            <textarea
+                              value={row[field.name] || ''}
+                              onChange={(e) => updateCell(rowIndex, field.name, e.target.value)}
+                              placeholder={field.placeholder}
+                              rows={2}
+                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none resize-none"
+                            />
+                          ) : field.type === 'multiselect' ? (
+                            <input
+                              type="text"
+                              value={Array.isArray(row[field.name]) ? row[field.name].join(', ') : ''}
+                              onChange={(e) => {
+                                const values = e.target.value.split(',').map(v => v.trim()).filter(v => v);
+                                updateCell(rowIndex, field.name, values);
+                              }}
+                              placeholder="쉼표로 구분"
+                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={row[field.name] || ''}
+                              onChange={(e) => updateCell(rowIndex, field.name, e.target.value)}
+                              placeholder={field.placeholder}
+                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
+                            />
+                          )}
+                        </td>
+                      ))}
+
+                      {/* 삭제 버튼 */}
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => deleteRow(rowIndex)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          title="행 삭제"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <button
-            onClick={handleTextSubmit}
-            disabled={!textInput.trim()}
-            className={`
-              w-full py-3 px-6 rounded-xl font-semibold transition-all
-              ${textInput.trim()
-                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }
-            `}
-          >
-            데이터 적용하기
-          </button>
+          {/* 액션 버튼들 */}
+          <div className="flex space-x-3">
+            <button
+              onClick={addNewRow}
+              className="flex-1 py-3 px-6 bg-white text-teal-700 border-2 border-teal-300 rounded-xl font-semibold hover:bg-teal-50 transition-all shadow-md hover:shadow-lg"
+            >
+              <span className="flex items-center justify-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>새 행 추가</span>
+              </span>
+            </button>
+          </div>
 
-          {/* 파싱된 항목 미리보기 */}
-          {parsedItems.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-              <p className="text-sm text-green-900 font-semibold mb-2">
-                ✅ {parsedItems.length}개 데이터가 준비되었습니다!
-              </p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {parsedItems.slice(0, 5).map((item, i) => (
-                  <div key={i} className="text-xs text-green-800">
-                    {i + 1}. {Object.values(item).slice(0, 3).join(' · ')}
+          {/* 데이터 개수 표시 */}
+          {rows.length > 0 && (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                ))}
-                {parsedItems.length > 5 && (
-                  <p className="text-xs text-green-700">... 외 {parsedItems.length - 5}개</p>
-                )}
+                  <div>
+                    <p className="text-sm font-bold text-emerald-900">
+                      ✅ {rows.length}개 데이터 준비 완료
+                    </p>
+                    <p className="text-xs text-emerald-700">
+                      AI가 이 데이터를 기반으로 앱을 생성합니다
+                    </p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-white rounded-full shadow-md">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-semibold text-slate-700">Ready</span>
+                </div>
               </div>
             </div>
           )}
@@ -270,4 +322,3 @@ export default function DataInput({
     </div>
   );
 }
-

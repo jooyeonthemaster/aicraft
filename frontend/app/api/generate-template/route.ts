@@ -7,6 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import { getTemplate } from '@/lib/templates';
 import { IndustryType, UITheme } from '@/types/templates';
+import { getRequiredHelpers, getInputFieldCode, getPromptBuildingGuide } from '@/lib/ai-helpers';
 
 export async function POST(request: Request) {
   try {
@@ -64,6 +65,65 @@ export async function POST(request: Request) {
 이 정보를 앱의 헤더와 푸터에 반드시 포함하세요!
 ` : '';
 
+    // ✨ 스마트 헬퍼 시스템: 필요한 것만 선택적으로 제공
+    const customerQuestions = appSettings?.customerQuestions || [];
+    const customerQuestionsText = customerQuestions.length > 0 ? `
+
+【⭐⭐⭐ 고객 입력 필드 시스템】
+
+사용자가 ${customerQuestions.length}개의 질문을 설정했습니다. 반드시 앱에 포함하세요!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 설정된 질문 목록:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${customerQuestions.map((q: any, i: number) => `${i + 1}. ${q.label} (${q.fieldType}) ${q.required ? '- 필수' : ''}
+   AI 활용: ${q.aiInstruction}`).join('\n\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛠️ 헬퍼 함수 라이브러리 (복사해서 사용하세요)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${getRequiredHelpers(customerQuestions)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 State 초기화 (정확한 타입으로)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const [userInput, setUserInput] = useState({
+${customerQuestions.map((q: any) => {
+  if (q.fieldType === 'multiselect') return `  ${q.id}: [], // ${q.label}`;
+  else if (q.fieldType === 'number' || q.fieldType === 'range') return `  ${q.id}: 0, // ${q.label}`;
+  else if (q.fieldType === 'select') return `  ${q.id}: '${q.options?.[0] || ''}', // ${q.label}`;
+  else return `  ${q.id}: '', // ${q.label}`;
+}).join('\n')}
+});
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 입력 필드 JSX (복사해서 사용하세요)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<form onSubmit={handleSubmit} className="space-y-4 p-6">
+${customerQuestions.map((q: any) => getInputFieldCode(q)).join('\n')}
+
+  <button 
+    type="submit" 
+    disabled={loading}
+    className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-bold"
+  >
+    {loading ? '${customerQuestions.some((q: any) => q.id === 'nationality') ? 'phrases.loading' : "'추천 생성 중...'"} : '${customerQuestions.some((q: any) => q.id === 'nationality') ? 'phrases.submit' : "'추천받기'"}'}
+  </button>
+</form>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 완벽한 handleSubmit 구현 (복사해서 사용하세요)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${getPromptBuildingGuide(customerQuestions)}
+
+⚠️⚠️⚠️ 위 헬퍼 함수들을 앱 최상단에 정의하고 사용하세요!
+` : '';
+
     const appSettingsText = appSettings ? `
 
 【앱 설정】
@@ -85,6 +145,7 @@ export async function POST(request: Request) {
     const systemPrompt = `${template.promptTemplate.systemPrompt}
 ${businessInfoText}
 ${appSettingsText}
+${customerQuestionsText}
 
 당신은 이제 React 웹 앱 코드를 생성해야 합니다.
 

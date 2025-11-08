@@ -16,8 +16,9 @@ import CodePreview from '@/components/CodePreview';
 import RefinementChat from '@/components/RefinementChat';
 import VersionHistory from '@/components/VersionHistory';
 import Footer from '@/components/Footer';
+import LuxuryLoadingScreen from '@/components/LuxuryLoadingScreen';
 
-type Step = 'select' | 'upload' | 'input' | 'preview';
+type Step = 'select' | 'theme' | 'upload' | 'input' | 'preview';
 
 export default function Home() {
   // 상태 관리
@@ -59,7 +60,9 @@ export default function Home() {
 
   // 다음 단계로
   const handleNext = () => {
-    if (currentStep === 'select' && selectedIndustry && selectedTheme) {
+    if (currentStep === 'select' && selectedIndustry) {
+      setCurrentStep('theme');
+    } else if (currentStep === 'theme' && selectedTheme) {
       setCurrentStep('upload');
     } else if (currentStep === 'upload') {
       // 데이터는 선택사항 - 데이터 있든 없든 진행 가능
@@ -73,7 +76,8 @@ export default function Home() {
   // 이전 단계로
   const handleBack = () => {
     if (currentStep === 'input') setCurrentStep('upload');
-    else if (currentStep === 'upload') setCurrentStep('select');
+    else if (currentStep === 'upload') setCurrentStep('theme');
+    else if (currentStep === 'theme') setCurrentStep('select');
     else if (currentStep === 'preview') setCurrentStep('input');
   };
 
@@ -249,75 +253,114 @@ export default function Home() {
   const currentTemplate = selectedIndustry ? getTemplate(selectedIndustry) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-      {/* 헤더 */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">lunus</h1>
-              <p className="text-xs sm:text-sm text-gray-600">AI 앱 빌더</p>
-            </div>
-            <div className="text-2xl sm:text-3xl">🌙</div>
-          </div>
-        </div>
-      </header>
+    <>
+      {/* ✨ Luxury Loading Screen */}
+      <LuxuryLoadingScreen isLoading={isGenerating || isRefining} />
 
-      {/* 진행 상태 바 */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            {[
-              { key: 'select', label: '템플릿', icon: '📋' },
-              { key: 'upload', label: '데이터', icon: '📁' },
-              { key: 'input', label: '설정', icon: '⚙️' },
-              { key: 'preview', label: '완성', icon: '🎉' }
-            ].map((step, index) => {
-              const isActive = step.key === currentStep;
-              const isCompleted = 
-                (step.key === 'select' && selectedIndustry && selectedTheme) ||
-                (step.key === 'upload' && currentStep !== 'select') || // 데이터 단계는 선택사항이므로 지나갔으면 완료
-                (step.key === 'input' && businessInfo && appSettings) ||
-                (step.key === 'preview' && generatedCode);
-
-              return (
-                <div key={step.key} className="flex-1">
-                  <div className="flex flex-col items-center">
-                    <div className={`
-                      w-10 h-10 rounded-full flex items-center justify-center text-lg
-                      transition-all
-                      ${isActive 
-                        ? 'bg-blue-500 text-white ring-4 ring-blue-100' 
-                        : isCompleted
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                      }
-                    `}>
-                      {isCompleted ? '✓' : step.icon}
-                    </div>
-                    <span className={`
-                      text-xs mt-1 font-medium
-                      ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'}
-                    `}>
-                      {step.label}
-                    </span>
-                  </div>
-                  {index < 3 && (
-                    <div className={`
-                      h-0.5 mt-5 -mx-2
-                      ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}
-                    `} />
-                  )}
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* ✨ Rolex-Inspired Header */}
+        <header className="bg-white border-b border-teal-100 sticky top-0 z-40 backdrop-blur-lg bg-white/90">
+          <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="flex items-center justify-between h-20">
+              {/* Logo */}
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">🌙</span>
                 </div>
-              );
-            })}
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold gradient-text tracking-tight">
+                    lunus
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                    AI Restaurant App Builder
+                  </p>
+                </div>
+              </div>
+              
+              {/* Premium Badge */}
+              <div className="hidden sm:flex items-center space-x-2 px-4 py-2 rounded-full bg-teal-50 border border-teal-200">
+                <span className="text-sm font-semibold text-teal-700">Premium</span>
+                <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* ✨ Luxury Progress Indicator */}
+        <div className="bg-gradient-to-r from-slate-50 to-teal-50 border-b border-teal-100">
+          <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-6">
+            <div className="relative flex items-center justify-between">
+              {[
+                { key: 'select', label: '컨셉', icon: '🌟', step: 1 },
+                { key: 'theme', label: '테마', icon: '🎨', step: 2 },
+                { key: 'upload', label: '데이터', icon: '📊', step: 3 },
+                { key: 'input', label: '브랜딩', icon: '⚙️', step: 4 },
+                { key: 'preview', label: '완성', icon: '🚀', step: 5 }
+              ].map((step, index) => {
+                const isActive = step.key === currentStep;
+                const isCompleted = 
+                  (step.key === 'select' && selectedIndustry) ||
+                  (step.key === 'theme' && selectedTheme) ||
+                  (step.key === 'upload' && (currentStep === 'input' || currentStep === 'preview')) ||
+                  (step.key === 'input' && businessInfo && appSettings) ||
+                  (step.key === 'preview' && generatedCode);
+
+                return (
+                  <div key={step.key} className="flex-1 relative">
+                    <div className="flex flex-col items-center z-10 relative">
+                      {/* Step Circle */}
+                      <div className={`
+                        w-14 h-14 rounded-full flex items-center justify-center text-xl
+                        transition-all duration-300 transform
+                        ${isActive 
+                          ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-xl scale-110 ring-4 ring-teal-100' 
+                          : isCompleted
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg'
+                          : 'bg-white text-slate-400 border-2 border-slate-200'
+                        }
+                      `}>
+                        {isCompleted && !isActive ? '✓' : step.icon}
+                      </div>
+                      
+                      {/* Step Label */}
+                      <span className={`
+                        text-xs sm:text-sm mt-2 font-semibold transition-colors
+                        ${isActive ? 'text-teal-700' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}
+                      `}>
+                        {step.label}
+                      </span>
+                      
+                      {/* Step Number */}
+                      <span className={`
+                        text-[10px] mt-0.5 font-medium
+                        ${isActive ? 'text-teal-600' : isCompleted ? 'text-emerald-500' : 'text-slate-300'}
+                      `}>
+                        Step {step.step}
+                      </span>
+                    </div>
+                    
+                    {/* Connector Line */}
+                    {index < 4 && (
+                      <div className="absolute top-7 left-1/2 w-full h-1 -z-10">
+                        <div className="h-full bg-slate-200 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 ${
+                              isCompleted ? 'bg-gradient-to-r from-emerald-500 to-teal-500 w-full' : 'w-0'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* 메인 컨텐츠 */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-6">
           {/* 에러 메시지 */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
@@ -325,34 +368,75 @@ export default function Home() {
             </div>
           )}
 
-          {/* 1단계: 템플릿 선택 */}
+          {/* 1단계: 업종 선택 */}
           {currentStep === 'select' && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4 animate-fadeIn">
               <TemplateSelector
                 selectedIndustry={selectedIndustry}
-                selectedTheme={selectedTheme}
+                selectedTheme={undefined}
                 onIndustrySelect={handleIndustrySelect}
-                onThemeSelect={handleThemeSelect}
+                onThemeSelect={() => {}}
+                showThemeSelection={false}
               />
 
-              {selectedIndustry && selectedTheme && (
-                <button
-                  onClick={handleNext}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                >
-                  다음 단계 →
-                </button>
+              {selectedIndustry && (
+                <div className="max-w-2xl mx-auto">
+                  <button
+                    onClick={handleNext}
+                    className="w-full py-5 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-[1.02] btn-luxury relative overflow-hidden group"
+                  >
+                    <span className="relative z-10 flex items-center justify-center space-x-2">
+                      <span>다음 단계로 진행</span>
+                      <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </span>
+                  </button>
+                </div>
               )}
             </div>
           )}
 
-          {/* 2단계: 데이터 입력 (파일 또는 텍스트) */}
+          {/* 2단계: 테마 선택 */}
+          {currentStep === 'theme' && selectedIndustry && (
+            <div className="space-y-4 animate-fadeIn">
+              <TemplateSelector
+                selectedIndustry={selectedIndustry}
+                selectedTheme={selectedTheme}
+                onIndustrySelect={() => {}}
+                onThemeSelect={handleThemeSelect}
+                showThemeSelection={true}
+              />
+
+              <div className="flex space-x-4 max-w-3xl mx-auto">
+                <button
+                  onClick={handleBack}
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-all border-2 border-slate-200 hover:border-slate-300"
+                >
+                  ← 이전 단계
+                </button>
+                {selectedTheme && (
+                  <button
+                    onClick={handleNext}
+                    className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:shadow-xl transition-all btn-luxury"
+                  >
+                    다음 단계 →
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3단계: 데이터 입력 (파일 또는 텍스트) */}
           {currentStep === 'upload' && currentTemplate && selectedIndustry && (
             <div className="space-y-6 animate-fadeIn">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">데이터 입력</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  {currentTemplate.name}에 사용할 데이터를 입력하세요 (선택사항)
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg mb-4">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">데이터 입력</h2>
+                <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
+                  {currentTemplate.name}에 사용할 메뉴 데이터를 입력하세요 (선택사항)
                 </p>
               </div>
 
@@ -364,38 +448,47 @@ export default function Home() {
                 industry={selectedIndustry}
               />
 
-              <div className="flex space-x-3">
+              <div className="flex space-x-4">
                 <button
                   onClick={handleBack}
-                  className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
+                  className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-all border-2 border-slate-200 hover:border-slate-300"
                 >
-                  ← 이전
+                  ← 이전 단계
                 </button>
                 <button
                   onClick={handleNext}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                  className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:shadow-xl transition-all btn-luxury"
                 >
-                  다음 →
+                  다음 단계 →
                 </button>
               </div>
 
               {/* 안내 메시지 */}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                <p className="text-xs text-gray-600">
-                  💡 데이터를 입력하지 않아도 다음 단계로 진행할 수 있습니다. 
-                  데이터가 없으면 일반적인 AI 앱이 생성됩니다.
-                </p>
+              <div className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-teal-200 rounded-xl p-5">
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">💡</span>
+                  <div>
+                    <p className="text-sm font-semibold text-teal-900 mb-1">선택사항 안내</p>
+                    <p className="text-xs text-teal-700 leading-relaxed">
+                      데이터를 입력하지 않아도 다음 단계로 진행할 수 있습니다. 
+                      데이터가 없으면 일반적인 AI 앱이 생성됩니다.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* 3단계: 업체 정보 및 앱 설정 */}
+          {/* 4단계: 업체 정보 및 앱 설정 */}
           {currentStep === 'input' && currentTemplate && (
             <div className="space-y-6 animate-fadeIn">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">업체 정보 및 앱 설정</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  생성될 AI 앱의 정보를 입력하세요
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg mb-4">
+                  <span className="text-2xl">⚙️</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">업체 정보 및 브랜딩</h2>
+                <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
+                  생성될 AI 앱의 브랜드 정보와 설정을 입력하세요
                 </p>
               </div>
 
@@ -415,20 +508,25 @@ export default function Home() {
             </div>
           )}
 
-          {/* 4단계: 프리뷰 + 반복 수정 */}
+          {/* 5단계: 프리뷰 + 반복 수정 */}
           {currentStep === 'preview' && generatedCode && (
             <div className="space-y-6 animate-fadeIn">
               {/* 헤더 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">완성! 🎉</h2>
-                  <p className="text-sm text-gray-600">
-                    AI 앱이 생성되었습니다. 채팅으로 계속 개선할 수 있어요!
-                  </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                    <span className="text-2xl">🎉</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">완성!</h2>
+                    <p className="text-sm sm:text-base text-slate-600">
+                      AI 앱이 생성되었습니다. 채팅으로 계속 개선할 수 있어요!
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowVersionHistory(!showVersionHistory)}
-                  className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-semibold"
+                  className="px-5 py-2.5 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition-colors text-sm font-semibold border-2 border-teal-200 hover:border-teal-300"
                 >
                   {showVersionHistory ? '📚 히스토리 숨기기' : `📚 버전 ${codeVersions.length}개`}
                 </button>
@@ -463,7 +561,7 @@ export default function Home() {
               </div>
 
               {/* 액션 버튼 */}
-              <div className="flex space-x-3">
+              <div className="flex space-x-4">
                 <button
                   onClick={() => {
                     if (confirm('새로운 앱을 만들면 현재 작업이 모두 초기화됩니다. 계속하시겠습니까?')) {
@@ -479,49 +577,58 @@ export default function Home() {
                       setRefinementMessages([]);
                     }
                   }}
-                  className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
+                  className="flex-1 py-4 bg-white text-teal-700 rounded-xl font-semibold border-2 border-teal-200 hover:bg-teal-50 transition-all shadow-md hover:shadow-lg"
                 >
-                  🔄 새로운 앱 만들기
+                  <span className="flex items-center justify-center space-x-2">
+                    <span>🔄</span>
+                    <span>새로운 앱 만들기</span>
+                  </span>
                 </button>
               </div>
 
               {/* 안내 메시지 */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
-                <p className="text-sm text-gray-800 font-semibold mb-2">
-                  💡 <strong>AI와 대화하며 앱을 계속 개선하세요!</strong>
-                </p>
-                <ul className="text-xs text-gray-700 space-y-1">
-                  <li>• 우측 채팅창에서 수정 요청 (예: "버튼 색상 빨간색으로")</li>
-                  <li>• 실시간으로 코드 업데이트 및 프리뷰 반영</li>
-                  <li>• 버전 히스토리로 이전 버전 복구 가능</li>
-                  <li>• 무제한 수정 가능 (최대 토큰으로 최고 품질 보장)</li>
-                </ul>
+              <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border-2 border-teal-300 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-start space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                    <span className="text-xl">✨</span>
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-teal-900 mb-2">
+                      AI와 대화하며 앱을 계속 개선하세요!
+                    </p>
+                    <ul className="text-sm text-teal-700 space-y-2">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-teal-500 mt-0.5">•</span>
+                        <span>우측 채팅창에서 수정 요청 (예: "버튼 색상 빨간색으로")</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-teal-500 mt-0.5">•</span>
+                        <span>실시간으로 코드 업데이트 및 프리뷰 반영</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-teal-500 mt-0.5">•</span>
+                        <span>버전 히스토리로 이전 버전 복구 가능</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-teal-500 mt-0.5">•</span>
+                        <span>무제한 수정 가능 (최대 토큰으로 최고 품질 보장)</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center space-x-2 pt-3 border-t border-teal-200">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-semibold text-teal-600">Premium Quality Service</span>
+                </div>
               </div>
             </div>
           )}
         </div>
       </main>
 
-      {/* Footer */}
-      <Footer />
-
-      {/* 애니메이션 스타일 */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
-    </div>
+        {/* Footer */}
+        <Footer />
+      </div>
+    </>
   );
 }

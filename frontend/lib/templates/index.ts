@@ -1,21 +1,22 @@
 /**
- * 템플릿 통합 인덱스
+ * ✨ 템플릿 통합 인덱스 - 요식업 5가지 컨셉
+ * Rolex-Inspired Design System
  */
 
 import { Template, IndustryType } from '@/types/templates';
-import { restaurantTemplate } from './restaurant';
-import { realestateTemplate } from './realestate';
-import { medicalTemplate } from './medical';
-import { ecommerceTemplate } from './ecommerce';
-import { travelTemplate } from './travel';
+import { fineDiningTemplate } from './fine-dining';
+import { casualDiningTemplate } from './casual-dining';
+import { cafeBrunchTemplate } from './cafe-brunch';
+import { fastCasualTemplate } from './fast-casual';
+import { ethnicDiningTemplate } from './ethnic-dining';
 
-// 모든 템플릿 맵
+// 모든 템플릿 맵 (요식업 5가지 컨셉)
 export const templates: Record<IndustryType, Template> = {
-  restaurant: restaurantTemplate,
-  realestate: realestateTemplate,
-  medical: medicalTemplate,
-  ecommerce: ecommerceTemplate,
-  travel: travelTemplate
+  'fine-dining': fineDiningTemplate,
+  'casual-dining': casualDiningTemplate,
+  'cafe-brunch': cafeBrunchTemplate,
+  'fast-casual': fastCasualTemplate,
+  'ethnic-dining': ethnicDiningTemplate
 };
 
 // 템플릿 목록 (선택 UI용)
@@ -35,47 +36,52 @@ export function hasTemplate(industry: string): industry is IndustryType {
   return industry in templates;
 }
 
-// 업종별 메타데이터
+// ✨ 요식업 5가지 컨셉별 메타데이터 (Rolex-Inspired)
 export const industryMetadata = {
-  restaurant: {
-    title: '요식업',
-    subtitle: '메뉴 추천 AI',
-    description: '고객의 알러지와 선호도를 분석하여 최적의 메뉴를 추천합니다',
-    useCases: ['식당', '카페', '배달 앱', '호텔 레스토랑'],
-    color: '#FF6B6B',
-    gradient: 'from-red-500 to-pink-500'
+  'fine-dining': {
+    title: '파인다이닝',
+    subtitle: 'Fine Dining',
+    description: '미슐랭 스타일의 고급 코스 요리와 와인 페어링',
+    useCases: ['미슐랭 레스토랑', '고급 프렌치', '이탈리안 다이닝', '코스 요리'],
+    color: '#115E59',      // Deep Teal
+    gradient: 'from-teal-800 to-amber-600',
+    icon: '🌟'
   },
-  realestate: {
-    title: '부동산',
-    subtitle: '매물 추천 AI',
-    description: '예산과 선호도를 분석하여 최적의 매물을 추천합니다',
-    useCases: ['부동산 중개', '아파트 분양', '원룸 매칭', '오피스텔'],
-    color: '#2563EB',
-    gradient: 'from-blue-500 to-indigo-500'
+  'casual-dining': {
+    title: '캐주얼 다이닝',
+    subtitle: 'Casual Dining',
+    description: '가족과 함께하는 즐거운 식사, 편안하고 맛있는 메뉴',
+    useCases: ['가족 레스토랑', '치킨집', '피자 전문점', '버거 맛집'],
+    color: '#14B8A6',      // Teal
+    gradient: 'from-teal-500 to-orange-500',
+    icon: '🍗'
   },
-  medical: {
-    title: '의료',
-    subtitle: '진료과 추천 AI',
-    description: '증상을 분석하여 적절한 진료과를 추천합니다',
-    useCases: ['병원', '클리닉', '한의원', '치과'],
-    color: '#0EA5E9',
-    gradient: 'from-sky-500 to-cyan-500'
+  'cafe-brunch': {
+    title: '카페 & 브런치',
+    subtitle: 'Cafe & Brunch',
+    description: '힙한 카페에서 즐기는 커피와 브런치',
+    useCases: ['모던 카페', '브런치 전문점', '베이커리', '디저트 카페'],
+    color: '#0D9488',      // Teal Dark
+    gradient: 'from-teal-600 to-amber-400',
+    icon: '☕'
   },
-  ecommerce: {
-    title: '쇼핑몰',
-    subtitle: '상품 추천 AI',
-    description: '스타일과 선호도를 분석하여 최적의 상품을 추천합니다',
-    useCases: ['패션몰', '뷰티샵', '가전몰', '종합몰'],
-    color: '#EC4899',
-    gradient: 'from-pink-500 to-rose-500'
+  'fast-casual': {
+    title: '패스트 캐주얼',
+    subtitle: 'Fast Casual',
+    description: '빠르고 건강한 식사, 신선한 재료의 웰빙 메뉴',
+    useCases: ['샐러드바', '포케볼', '헬시 푸드', '단백질 전문점'],
+    color: '#10B981',      // Green
+    gradient: 'from-emerald-500 to-teal-500',
+    icon: '🥗'
   },
-  travel: {
-    title: '여행',
-    subtitle: '여행지 추천 AI',
-    description: '여행 스타일을 분석하여 최적의 여행지를 추천합니다',
-    useCases: ['여행사', '투어 플랫폼', '숙박 앱', '항공사'],
-    color: '#F59E0B',
-    gradient: 'from-amber-500 to-orange-500'
+  'ethnic-dining': {
+    title: '에스닉 다이닝',
+    subtitle: 'Ethnic Dining',
+    description: '세계 각국의 정통 요리로 떠나는 미식 여행',
+    useCases: ['중식당', '일식당', '태국음식', '베트남쌀국수'],
+    color: '#DC2626',      // Red
+    gradient: 'from-red-600 to-amber-500',
+    icon: '🌍'
   }
 };
 

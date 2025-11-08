@@ -7,6 +7,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
+import { CustomerQuestion } from '@/types/templates';
 
 const REFINEMENT_SYSTEM_PROMPT = `당신은 전문 React 코드 리팩토링 AI입니다.
 
@@ -135,6 +136,10 @@ ${businessInfo.features.length > 0 ? `- 특징: ${businessInfo.features.join(', 
 - AI 캐릭터: ${appSettings.aiCharacter}
 - 추천 개수: ${appSettings.recommendationCount}개
 ${appSettings.additionalInstructions ? `- 추가 지침: ${appSettings.additionalInstructions}` : ''}
+${appSettings.customerQuestions && appSettings.customerQuestions.length > 0 ? `
+- 고객 질문 (${appSettings.customerQuestions.length}개): ${appSettings.customerQuestions.map((q: CustomerQuestion) => q.label).join(', ')}
+  → 이 질문들이 앱의 입력 폼에 반드시 포함되어 있어야 합니다!
+` : ''}
 ` : '';
 
     // 전체 프롬프트 구성

@@ -4,10 +4,15 @@
  */
 
 // ============================================
-// 업종 타입
+// 업종 타입 - 요식업 5가지 컨셉
 // ============================================
 
-export type IndustryType = 'restaurant' | 'realestate' | 'medical' | 'ecommerce' | 'travel';
+export type IndustryType = 
+  | 'fine-dining'      // 파인다이닝 - 고급 레스토랑
+  | 'casual-dining'    // 캐주얼 다이닝 - 가족 레스토랑
+  | 'cafe-brunch'      // 카페 & 브런치
+  | 'fast-casual'      // 패스트 캐주얼 - 건강식
+  | 'ethnic-dining';   // 에스닉 다이닝 - 세계 음식
 
 export type UITheme = 'modern' | 'classic' | 'minimal';
 
@@ -261,6 +266,20 @@ export interface BusinessInfo {
 }
 
 // ============================================
+// 고객 질문 설정
+// ============================================
+
+export interface CustomerQuestion {
+  id: string;
+  label: string;
+  fieldType: 'text' | 'number' | 'select' | 'multiselect' | 'range';
+  options?: string[];
+  required: boolean;
+  placeholder?: string;
+  aiInstruction?: string; // AI에게 이 데이터를 어떻게 활용할지 설명
+}
+
+// ============================================
 // 앱 설정
 // ============================================
 
@@ -271,6 +290,7 @@ export interface AppSettings {
   aiCharacter: string; // 친근함, 전문적, 유머러스
   recommendationCount: number;
   additionalInstructions: string;
+  customerQuestions?: CustomerQuestion[]; // 고객에게 물어볼 질문들
 }
 
 // ============================================
@@ -329,15 +349,15 @@ export interface ParseFileResponse {
 }
 
 // ============================================
-// 코드 수정 및 버전 관리
+// 코드 버전 관리 (반복 수정)
 // ============================================
 
 export interface CodeVersion {
   id: string;
   code: string;
   timestamp: Date;
-  userRequest?: string;
-  changesSummary?: string;
+  userRequest: string;
+  changesSummary: string;
 }
 
 export interface RefinementMessage {
@@ -346,21 +366,5 @@ export interface RefinementMessage {
   content: string;
   timestamp: Date;
   codeVersionId?: string;
-}
-
-export interface RefineCodeRequest {
-  currentCode: string;
-  userRequest: string;
-  conversationHistory: RefinementMessage[];
-  businessInfo?: BusinessInfo;
-  appSettings?: AppSettings;
-  industry: IndustryType;
-  theme: UITheme;
-}
-
-export interface RefineCodeResponse {
-  code: string;
-  changesSummary: string;
-  versionId: string;
 }
 
